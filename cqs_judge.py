@@ -39,9 +39,13 @@ class Judgement:
     correctness: int
     tone: int
     rationale: str = ""
+    dim_reasons: dict | None = None
 
     def scores(self) -> dict:
         return {d: getattr(self, d) for d in DIMENSIONS}
+
+    def reasons(self) -> dict:
+        return self.dim_reasons or {d: "" for d in DIMENSIONS}
 
     def cqs(self) -> float:
         return cqs_from_scores(self.scores())
@@ -124,23 +128,61 @@ class MockJudge:
         uw, aw = _content_words(user), _content_words(asst)
         overlap = len(uw & aw) / max(1, len(uw))
         relevance = 5 if overlap >= 0.40 else 4 if overlap >= 0.25 else 3 if overlap >= 0.12 else 2
+        rel_reason = (
+            "Closely matches what the customer asked about."
+            if relevance >= 4
+            else "Only partly matches what the customer asked." if relevance == 3
+            else "Doesn't really match what was asked."
+        )
 
         specifics = len(re.findall(r"\$?\d", asst)) + (1 if "?" in asst else 0)
         helpfulness = 5 if specifics >= 4 else 4 if specifics >= 2 else 3 if specifics >= 1 else 2
+        help_reason = (
+            "Gives specific options and a clear next step."
+            if helpfulness >= 4
+            else "Gives some detail but could be more specific." if helpfulness == 3
+            else "Too vague to really help."
+        )
 
-        if any(k in low for k in _REFUSAL):
+        refused = any(k in low for k in _REFUSAL)
+        if refused:
             helpfulness = 1
             relevance = min(relevance, 2)
+            help_reason = "Turns the request down, so it doesn't help."
+            rel_reason = "Declines the request instead of addressing it."
 
-        correctness = 3 if any(k in low for k in _HEDGE) else 4  # cannot verify facts
+        hedged = any(k in low for k in _HEDGE)
+        correctness = 3 if hedged else 4  # heuristic cannot verify facts
+        cor_reason = (
+            "Vague, non-committal wording — hard to call it accurate."
+            if hedged
+            else "Nothing looks obviously wrong (note: this check can't verify facts)."
+        )
 
-        tone = 5 if any(k in low for k in _POLITE) else 4
-        if len(asst.split()) < 8:
-            tone = min(tone, 2)  # terse / unhelpful
+        polite = any(k in low for k in _POLITE)
+        tone = 5 if polite else 4
+        terse = len(asst.split()) < 8
+        if terse:
+            tone = min(tone, 2)
+            tone_reason = "Very short and abrupt."
+        else:
+            tone_reason = (
+                "Warm and polite."
+                if polite
+                else "Neutral, businesslike tone."
+            )
+
+        dim_reasons = {
+            "relevance": rel_reason,
+            "helpfulness": help_reason,
+            "correctness": cor_reason,
+            "tone": tone_reason,
+        }
 
         return Judgement(
             relevance, helpfulness, correctness, tone,
-            "Heuristic baseline: keyword overlap, specificity, and tone markers (no LLM).",
+            "Automated score based on a simple rule-based check (no LLM).",
+            dim_reasons=dim_reasons,
         )
 
 
