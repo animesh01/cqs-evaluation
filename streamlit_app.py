@@ -22,7 +22,19 @@ from cqs_judge import DIMENSIONS, RUBRIC, cqs_from_scores, get_judge
 from agent_sim import simulate_agent_reply
 
 ROOT = Path(__file__).resolve().parent
-POOL_DATA = ROOT / "data" / "conversation_pool.json"
+
+
+def _find_pool() -> Path:
+    """Locate conversation_pool.json whether it sits in data/ or the repo root."""
+    for candidate in (ROOT / "data" / "conversation_pool.json",
+                      ROOT / "conversation_pool.json"):
+        if candidate.exists():
+            return candidate
+    # default (will raise a clear error if truly missing)
+    return ROOT / "data" / "conversation_pool.json"
+
+
+POOL_DATA = _find_pool()
 
 TEAL = "#0d766e"
 INK = "#12221f"
