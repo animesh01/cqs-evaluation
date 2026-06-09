@@ -36,13 +36,19 @@ def _find_pool() -> Path:
 
 POOL_DATA = _find_pool()
 
-TEAL = "#0d766e"
-INK = "#12221f"
-MUTED = "#62706d"
-MINT = "#dff4ef"
-SAND = "#f4efe7"
-AMBER = "#b66a16"
-RED = "#b84040"
+# Dark theme palette
+BG = "#0f1715"          # page background (deep teal-slate)
+SURFACE = "#16211e"     # card surface
+SURFACE2 = "#1d2b27"    # secondary surface / chips bg
+BORDER = "#2a3a35"      # subtle borders
+TEAL = "#3fd6ab"        # brightened teal accent for dark
+TEAL_DEEP = "#0d766e"   # deep teal for hero gradient
+INK = "#eaf2ef"         # primary text (near-white)
+MUTED = "#90a39d"       # muted text
+MINT = "#15302a"        # customer-bubble bg (dark mint)
+SAND = "#241f17"        # math-line bg (dark sand)
+AMBER = "#e0a23c"       # brightened amber
+RED = "#e26d6d"         # brightened red
 
 METRIC_HELP = {
     "relevance": "Does the assistant directly address what the customer asked? "
@@ -67,42 +73,54 @@ def inject_styles() -> None:
         f"""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
+        /* dark app background */
+        .stApp {{ background:{BG}; }}
         html, body, [class*="css"] {{ font-family:"DM Sans",sans-serif; color:{INK}; }}
-        h1,h2,h3,h4 {{ font-family:"Manrope",sans-serif !important; letter-spacing:-0.02em; }}
+        h1,h2,h3,h4,h5,h6 {{ font-family:"Manrope",sans-serif !important; letter-spacing:-0.02em; color:{INK} !important; }}
+        p, span, div, label, li, td, th {{ color:{INK}; }}
+        .stCaption, [data-testid="stCaptionContainer"] {{ color:{MUTED} !important; }}
         .hero {{
             border-radius:20px; padding:30px 34px; margin-bottom:18px; color:#fff;
-            background:linear-gradient(135deg,#0d766e 0%,#0f8a73 55%,#14a989 100%);
+            background:linear-gradient(135deg,#0b5f59 0%,#0f8a73 55%,#19c79f 100%);
             position:relative; overflow:hidden;
+            box-shadow:0 0 0 1px rgba(63,214,171,0.18), 0 18px 50px -20px rgba(25,199,159,0.45);
         }}
         .hero h1 {{ color:#fff !important; font-size:2.05rem; margin:6px 0 6px; }}
-        .hero p {{ color:#e7f6f1; font-size:1.02rem; line-height:1.55; max-width:80%; margin:0; }}
+        .hero p {{ color:#e7f6f1 !important; font-size:1.02rem; line-height:1.55; max-width:80%; margin:0; }}
         .hero .pill {{ display:inline-block; padding:4px 13px; border-radius:999px;
-            background:rgba(255,255,255,0.18); color:#fff; font-size:0.74rem; font-weight:700;
+            background:rgba(255,255,255,0.18); color:#fff !important; font-size:0.74rem; font-weight:700;
             letter-spacing:0.07em; text-transform:uppercase; }}
         .hero-art {{ position:absolute; right:-10px; top:-10px; opacity:0.9; }}
         .stat-row {{ display:flex; gap:14px; margin-top:18px; flex-wrap:wrap; }}
         .stat {{ background:rgba(255,255,255,0.14); border-radius:12px; padding:10px 16px; }}
-        .stat .n {{ font-size:1.35rem; font-weight:800; font-family:Manrope; }}
-        .stat .l {{ font-size:0.74rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; }}
-        .rubric-box {{ border:1px solid #e6e9e4; border-radius:14px; padding:14px 18px; background:#fff; }}
+        .stat .n {{ font-size:1.35rem; font-weight:800; font-family:Manrope; color:#fff; }}
+        .stat .l {{ font-size:0.74rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; color:#fff; }}
+        .rubric-box {{ border:1px solid {BORDER}; border-radius:14px; padding:14px 18px; background:{SURFACE}; }}
         .rubric-row {{ display:flex; gap:10px; padding:5px 0; font-size:0.92rem; align-items:baseline; }}
         .rubric-name {{ min-width:118px; font-weight:700; color:{TEAL}; text-transform:capitalize; }}
         .conv-msg {{ border-radius:10px; padding:10px 14px; margin:4px 0; font-size:0.93rem; line-height:1.5; }}
         .conv-user {{ background:{MINT}; }}
-        .conv-asst {{ background:#f5f6f4; border-left:3px solid {TEAL}; border-radius:0 10px 10px 0; }}
-        .agent-reply {{ border:1px solid #e6e9e4; border-left:4px solid {TEAL};
-            border-radius:0 10px 10px 0; padding:14px 18px; background:#fff; font-size:1rem; line-height:1.5; }}
-        .cqs-card {{ border:1px solid #e6e9e4; border-radius:14px; padding:18px 20px; background:#fff; }}
+        .conv-asst {{ background:{SURFACE2}; border-left:3px solid {TEAL}; border-radius:0 10px 10px 0; }}
+        .agent-reply {{ border:1px solid {BORDER}; border-left:4px solid {TEAL};
+            border-radius:0 10px 10px 0; padding:14px 18px; background:{SURFACE}; font-size:1rem; line-height:1.5; }}
+        .cqs-card {{ border:1px solid {BORDER}; border-radius:14px; padding:18px 20px; background:{SURFACE}; }}
         .cmptbl {{ width:100%; border-collapse:collapse; font-size:0.9rem; }}
         .cmptbl th {{ color:{MUTED}; text-align:left; padding:6px 10px; font-weight:700;
-            border-bottom:1px solid #eceee9; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.03em; }}
-        .cmptbl td {{ padding:9px 10px; border-bottom:1px solid #f1f2ef; vertical-align:top; }}
+            border-bottom:1px solid {BORDER}; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.03em; }}
+        .cmptbl td {{ padding:9px 10px; border-bottom:1px solid {BORDER}; vertical-align:top; }}
         .scorechip {{ display:inline-block; min-width:30px; text-align:center; padding:3px 8px;
             border-radius:8px; font-weight:700; font-size:0.88rem; }}
         .reason {{ color:{MUTED}; font-size:0.85rem; line-height:1.4; }}
         .mathline {{ background:{SAND}; border-radius:10px; padding:10px 14px; font-size:0.9rem;
             display:flex; gap:22px; flex-wrap:wrap; margin:6px 0 12px; }}
         .mathline b {{ font-family:Manrope; }}
+        /* expanders + tabs on dark */
+        [data-testid="stExpander"] {{ border:1px solid {BORDER} !important; border-radius:10px; background:{SURFACE}; }}
+        [data-testid="stExpander"] summary {{ color:{INK} !important; }}
+        .stTabs [data-baseweb="tab"] {{ color:{MUTED}; }}
+        .stTabs [aria-selected="true"] {{ color:{INK}; }}
+        [data-testid="stMetricValue"] {{ color:{INK}; }}
+        [data-testid="stMetricLabel"] {{ color:{MUTED}; }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -181,11 +199,11 @@ def score_color(cqs: float) -> str:
 
 def chip(value: int) -> str:
     if value >= 4:
-        bg, fg = "#e1f5ee", TEAL
+        bg, fg = "#13332b", TEAL
     elif value >= 3:
-        bg, fg = "#faeeda", AMBER
+        bg, fg = "#33280f", AMBER
     else:
-        bg, fg = "#fcebeb", RED
+        bg, fg = "#3a1d1d", RED
     return f"<span class='scorechip' style='background:{bg};color:{fg}'>{value}</span>"
 
 
@@ -335,7 +353,7 @@ def agreement_scatter_fig(rows, focused_id=None):
     fig.add_trace(go.Scatter(
         x=xs, y=ys, mode="markers",
         marker=dict(size=sizes, color=colors,
-                    line=dict(color="#ffffff", width=lines)),
+                    line=dict(color=SURFACE, width=lines)),
         customdata=list(zip(ids, domains)),
         hovertemplate="<b>%{customdata[0]}</b> (%{customdata[1]})<br>"
                       "judge %{x:.0f} · human %{y:.0f}<extra></extra>",
@@ -343,11 +361,11 @@ def agreement_scatter_fig(rows, focused_id=None):
     ))
     fig.update_layout(
         height=360, margin=dict(l=10, r=10, t=10, b=10),
-        plot_bgcolor="#ffffff", paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor=SURFACE, paper_bgcolor="rgba(0,0,0,0)",
         font=dict(family="DM Sans, sans-serif", size=12, color=MUTED),
-        xaxis=dict(title="LLM judge CQS →", range=[-3, 103], gridcolor="#eef0ec",
+        xaxis=dict(title="LLM judge CQS →", range=[-3, 103], gridcolor=BORDER,
                    zeroline=False, dtick=25),
-        yaxis=dict(title="← Human CQS", range=[-3, 103], gridcolor="#eef0ec",
+        yaxis=dict(title="← Human CQS", range=[-3, 103], gridcolor=BORDER,
                    zeroline=False, dtick=25),
         dragmode=False,
     )
@@ -421,7 +439,7 @@ def render_benchmark(judge) -> None:
                 f"<div style='display:flex;justify-content:space-between;font-size:0.88rem'>"
                 f"<span style='text-transform:capitalize'>{DIM_ICON[d]} {d}</span>"
                 f"<span style='color:{MUTED}'>{mean:+.2f} ({direction})</span></div>"
-                f"<div style='background:#eef0ec;border-radius:5px;height:8px;margin-top:3px'>"
+                f"<div style='background:{BORDER};border-radius:5px;height:8px;margin-top:3px'>"
                 f"<div style='width:{pct:.0f}%;background:{bar_col};height:8px;border-radius:5px'></div>"
                 f"</div></div>",
                 unsafe_allow_html=True,
