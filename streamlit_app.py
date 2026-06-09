@@ -121,6 +121,17 @@ def inject_styles() -> None:
         .stTabs [aria-selected="true"] {{ color:{INK}; }}
         [data-testid="stMetricValue"] {{ color:{INK}; }}
         [data-testid="stMetricLabel"] {{ color:{MUTED}; }}
+        /* primary buttons: filled teal */
+        .stButton button[kind="primary"] {{
+            background:{TEAL} !important; color:#06201a !important; border:none !important;
+            font-weight:600 !important;
+        }}
+        .stButton button[kind="primary"]:hover {{ background:#5fe2bd !important; color:#06201a !important; }}
+        /* selectbox: teal-accented to match the buttons */
+        [data-testid="stSelectbox"] div[data-baseweb="select"] > div {{
+            background:{SURFACE} !important; border-color:{TEAL} !important; color:{INK} !important;
+        }}
+        [data-testid="stSelectbox"] svg {{ fill:{TEAL} !important; }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -385,7 +396,7 @@ def render_benchmark(judge) -> None:
             st.session_state["bench_seed"] = random.randint(0, 10_000)
             st.session_state.pop("focus_id", None)
     with top[1]:
-        if st.button("Show full pool"):
+        if st.button("Show full pool", type="primary"):
             st.session_state["bench_seed"] = "ALL"
 
     seed = st.session_state.get("bench_seed", 42)
