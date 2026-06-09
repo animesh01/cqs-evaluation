@@ -519,7 +519,7 @@ def render_score_own(judge) -> None:
             st.session_state["sim_user"] = user_text
             st.session_state.pop("sim_judgement", None)
     with col_reset:
-        if st.button("Clear"):
+        if st.button("Clear", type="primary"):
             for k in ("sim_reply", "sim_user", "sim_judgement"):
                 st.session_state.pop(k, None)
 
