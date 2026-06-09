@@ -132,6 +132,17 @@ def inject_styles() -> None:
             background:{SURFACE} !important; border-color:{TEAL} !important; color:{INK} !important;
         }}
         [data-testid="stSelectbox"] svg {{ fill:{TEAL} !important; }}
+        /* the open dropdown menu popup (BaseWeb popover) */
+        ul[role="listbox"] {{ background:{SURFACE} !important; border:1px solid {BORDER} !important; }}
+        ul[role="listbox"] li {{ background:{SURFACE} !important; color:{INK} !important; }}
+        ul[role="listbox"] li:hover {{ background:{SURFACE2} !important; color:{INK} !important; }}
+        li[role="option"] {{ background:{SURFACE} !important; color:{INK} !important; }}
+        li[role="option"]:hover, li[role="option"][aria-selected="true"] {{
+            background:{SURFACE2} !important; color:{TEAL} !important;
+        }}
+        div[data-baseweb="popover"] {{ background:{SURFACE} !important; }}
+        div[data-baseweb="menu"] {{ background:{SURFACE} !important; }}
+        div[data-baseweb="menu"] li {{ color:{INK} !important; }}
         </style>
         """,
         unsafe_allow_html=True,
