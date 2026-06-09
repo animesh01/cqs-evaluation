@@ -1,12 +1,14 @@
 """Conversation Quality Score (CQS) — interactive Streamlit console.
 
-An LLM-as-a-judge evaluation demo for conversational AI. Scores customer
-conversations on four rubric dimensions (relevance, helpfulness, correctness,
-tone), rolls them into a single 0-100 CQS, and calibrates the automated judge
-against human labels.
+An LLM-as-a-judge style evaluation demo for conversational AI. It scores
+customer conversations on four rubric dimensions (relevance, helpfulness,
+correctness, tone), rolls them into a single 0-100 CQS, and benchmarks the
+automated judge against human labels.
 
-Runs out of the box with a deterministic MOCK judge (no API key). Paste an
-Anthropic API key in the sidebar to switch to the real LLM judge.
+This demo runs entirely on a deterministic, built-in heuristic judge — no API
+key or setup required. The same heuristic powers a simple agent-reply simulator
+in the "Score your own" tab so you can generate and grade a conversation
+end to end.
 """
 from __future__ import annotations
 
@@ -18,6 +20,7 @@ import pandas as pd
 import streamlit as st
 
 from cqs_judge import DIMENSIONS, RUBRIC, cqs_from_scores, get_judge
+from agent_sim import simulate_agent_reply
 
 ROOT = Path(__file__).resolve().parent
 SAMPLE_DATA = ROOT / "data" / "sample_conversations.json"
@@ -36,7 +39,7 @@ st.set_page_config(
     page_title="CQS — Conversation Quality Score",
     page_icon="C",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 
@@ -55,6 +58,11 @@ def inject_styles() -> None:
         .cqs-card {{
             border:1px solid #e6e9e4; border-radius:14px; padding:18px 20px;
             background:#ffffff;
+        }}
+        .agent-reply {{
+            border:1px solid #e6e9e4; border-left:4px solid {COLORS["teal"]};
+            border-radius:10px; padding:14px 18px; background:#ffffff;
+            font-size:1rem; line-height:1.5;
         }}
         </style>
         """,
@@ -79,69 +87,17 @@ def load_conversations() -> list[dict]:
         return json.load(f)
 
 
+@st.cache_resource
+def get_mock_judge():
+    return get_judge(mock=True)
+
+
 def score_color(cqs: float) -> str:
     if cqs >= 80:
         return COLORS["teal"]
     if cqs >= 60:
         return COLORS["amber"]
     return COLORS["red"]
-
-
-# --------------------------------------------------------------------------- #
-# Sidebar: judge configuration
-# --------------------------------------------------------------------------- #
-def sidebar_config() -> tuple[bool, str, str | None]:
-    st.sidebar.markdown("### Judge configuration")
-    mode = st.sidebar.radio(
-        "Judge mode",
-        ["Mock (no API key, free)", "Real LLM judge (Anthropic)"],
-        help="Mock is a deterministic keyword heuristic that runs instantly. "
-        "The real judge calls the Anthropic API and is far more accurate.",
-    )
-    use_mock = mode.startswith("Mock")
-
-    api_key = None
-    model = "claude-sonnet-4-6"
-    if not use_mock:
-        # Pull a pre-set key from Streamlit secrets if the owner configured one,
-        # otherwise let the visitor paste their own. The text box value lives only
-        # in this session and is never logged or written to disk.
-        secret_key = None
-        try:
-            secret_key = st.secrets.get("ANTHROPIC_API_KEY")  # type: ignore[attr-defined]
-        except Exception:
-            secret_key = None
-
-        api_key = st.sidebar.text_input(
-            "Anthropic API key",
-            value="",
-            type="password",
-            help="Your key is used only for this session. Never commit a key to the repo.",
-        ) or secret_key
-
-        model = st.sidebar.text_input("Model", value="claude-sonnet-4-6")
-        if not api_key:
-            st.sidebar.warning("Enter an API key, or switch to Mock mode to run for free.")
-
-    st.sidebar.markdown("---")
-    st.sidebar.markdown(
-        f"<span style='color:{COLORS['muted']};font-size:0.85rem'>"
-        "CQS = mean of four 1–5 rubric scores, rescaled to 0–100.</span>",
-        unsafe_allow_html=True,
-    )
-    return use_mock, model, api_key
-
-
-def judge_or_warn(use_mock: bool, model: str, api_key: str | None):
-    if use_mock:
-        return get_judge(mock=True)
-    if not api_key:
-        return None
-    try:
-        return get_judge(mock=False, model=model, api_key=api_key)
-    except Exception as exc:  # missing anthropic package, bad key construction, etc.
-        st.error(f"Could not initialise the LLM judge: {exc}")
-        return None
 
 
 # --------------------------------------------------------------------------- #
@@ -197,14 +153,13 @@ def render_benchmark(judge) -> None:
     n = len(j_all)
     exact = sum(1 for a, b in zip(j_all, h_all) if a == b) / n * 100
     within1 = sum(1 for a, b in zip(j_all, h_all) if abs(a - b) <= 1) / n * 100
-    mae = sum(abs(a - b) for a, b in zip(j_all, h_all)) / n
     r = pearson(j_all, h_all)
-    psr_mae = (df["judge CQS"] - df["human CQS"]).abs().mean()
+    cqs_mae = (df["judge CQS"] - df["human CQS"]).abs().mean()
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Exact dimension match", f"{exact:.0f}%")
     c2.metric("Within ±1", f"{within1:.0f}%")
-    c3.metric("CQS MAE (pts)", f"{psr_mae:.1f}")
+    c3.metric("CQS MAE (pts)", f"{cqs_mae:.1f}")
     c4.metric("Correlation r", f"{r:.2f}")
 
     st.markdown("##### Per-conversation scores")
@@ -219,32 +174,56 @@ def render_benchmark(judge) -> None:
             "human": [df[f"h_{d}"].mean() for d in DIMENSIONS],
         }
     ).set_index("dimension")
-    st.bar_chart(dim_df)
+    st.bar_chart(dim_df, color=[COLORS["teal"], COLORS["amber"]])
 
 
 # --------------------------------------------------------------------------- #
-# Tab 2: Score your own
+# Tab 2: Score your own  (two-step: simulate reply -> score it)
 # --------------------------------------------------------------------------- #
 def render_score_own(judge) -> None:
     st.markdown("#### Score your own conversation")
-    st.caption("Paste a short customer ↔ assistant exchange and let the judge grade it.")
-
-    default_user = "I need lightweight running shoes under $80, size 10."
-    default_asst = (
-        "Here are three lightweight running shoes under $80 in size 10: the Avia Flow "
-        "($59), the Athletic Works Glide ($45), and the No Boundaries Lite ($72). Want "
-        "me to add one to your cart?"
+    st.caption(
+        "Type a customer message, simulate the shopping assistant's reply, then "
+        "score that reply on the four CQS dimensions."
     )
-    col_u, col_a = st.columns(2)
-    user_text = col_u.text_area("Customer message", value=default_user, height=140)
-    asst_text = col_a.text_area("Assistant reply", value=default_asst, height=140)
 
+    default_msg = "I need lightweight running shoes under $80, size 10."
+    user_text = st.text_area("Customer message", value=default_msg, height=120)
+
+    col_sim, col_reset = st.columns([1, 1])
+    with col_sim:
+        if st.button("Simulate agent reply", type="primary"):
+            st.session_state["sim_reply"] = simulate_agent_reply(user_text)
+            st.session_state["sim_user"] = user_text
+            # clear any earlier score when a new reply is generated
+            st.session_state.pop("sim_judgement", None)
+    with col_reset:
+        if st.button("Clear"):
+            for k in ("sim_reply", "sim_user", "sim_judgement"):
+                st.session_state.pop(k, None)
+
+    reply = st.session_state.get("sim_reply")
+    if not reply:
+        st.info("Enter a customer message and click **Simulate agent reply** to begin.")
+        return
+
+    st.markdown("##### Simulated agent reply")
+    st.caption(
+        "Generated by a built-in rule-based simulator (a stand-in for a live agent)."
+    )
+    st.markdown(f"<div class='agent-reply'>{reply}</div>", unsafe_allow_html=True)
+    st.write("")
+
+    # Step 2: the score option appears only once a reply exists.
     if st.button("Score this conversation", type="primary"):
         turns = [
-            {"role": "user", "text": user_text},
-            {"role": "assistant", "text": asst_text},
+            {"role": "user", "text": st.session_state.get("sim_user", user_text)},
+            {"role": "assistant", "text": reply},
         ]
-        judgement = judge.score(turns)
+        st.session_state["sim_judgement"] = judge.score(turns)
+
+    judgement = st.session_state.get("sim_judgement")
+    if judgement is not None:
         cqs = judgement.cqs()
         st.markdown(
             f"<div class='cqs-card'><span class='cqs-pill'>CQS</span>"
@@ -272,14 +251,18 @@ def render_rubric() -> None:
     )
     st.table(rub)
     st.markdown(
-        "**Two-tier design.** Compliance-critical traffic gets 100% human review; "
-        "the long tail is scored cheaply by the LLM judge — and that automated signal "
-        "is calibrated against the human labels so you know how far to trust it."
+        "**Two-tier design.** In production, compliance-critical traffic gets human "
+        "review while the long tail is scored cheaply by an LLM judge — and that "
+        "automated signal is calibrated against human labels so you know how far to "
+        "trust it. This demo uses a deterministic heuristic in place of the LLM so it "
+        "runs with zero setup."
     )
 
 
 def main() -> None:
     inject_styles()
+    judge = get_mock_judge()
+
     st.markdown("<span class='cqs-pill'>LLM-as-a-judge</span>", unsafe_allow_html=True)
     st.title("Conversation Quality Score")
     st.markdown(
@@ -289,20 +272,11 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    use_mock, model, api_key = sidebar_config()
-    judge = judge_or_warn(use_mock, model, api_key)
-
     tab1, tab2, tab3 = st.tabs(["Benchmark", "Score your own", "Rubric"])
     with tab1:
-        if judge is None:
-            st.info("Configure the judge in the sidebar to run the benchmark.")
-        else:
-            render_benchmark(judge)
+        render_benchmark(judge)
     with tab2:
-        if judge is None:
-            st.info("Configure the judge in the sidebar to score a conversation.")
-        else:
-            render_score_own(judge)
+        render_score_own(judge)
     with tab3:
         render_rubric()
 
