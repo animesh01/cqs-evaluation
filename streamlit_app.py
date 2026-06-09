@@ -143,6 +143,17 @@ def inject_styles() -> None:
         div[data-baseweb="popover"] {{ background:{SURFACE} !important; }}
         div[data-baseweb="menu"] {{ background:{SURFACE} !important; }}
         div[data-baseweb="menu"] li {{ color:{INK} !important; }}
+        /* native help tooltips (the ⓘ hover popups) — make them dark and readable */
+        [data-testid="stTooltipContent"] {{
+            background:{SURFACE2} !important; color:{INK} !important;
+            border:1px solid {BORDER} !important;
+        }}
+        [data-testid="stTooltipContent"] * {{ color:{INK} !important; }}
+        div[role="tooltip"] {{ background:{SURFACE2} !important; color:{INK} !important; }}
+        div[role="tooltip"] * {{ color:{INK} !important; }}
+        [data-testid="stTooltipHoverTarget"] svg {{ fill:{MUTED} !important; opacity:0.85; }}
+        /* the small ⓘ icon next to metric labels */
+        [data-testid="stMetricLabel"] svg {{ fill:{TEAL} !important; opacity:0.9; }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -277,65 +288,25 @@ def metrics_header(j_all, h_all):
     within1 = sum(1 for a, b in zip(j_all, h_all) if abs(a - b) <= 1) / n * 100
     r = pearson(j_all, h_all)
     cqs_mae = sum(abs(a - b) for a, b in zip(j_all, h_all)) / n / 5 * 100
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Exact match", f"{exact:.0f}%",
-              help="Share of dimension grades where judge and human gave the identical 1–5 score.")
-    c2.metric("Within ±1", f"{within1:.0f}%",
-              help="Share of grades where judge and human are within one point — the practical agreement bar.")
-    c3.metric("CQS MAE", f"{cqs_mae:.1f} pts",
-              help="Mean absolute error between judge and human on the 0–100 CQS scale.")
-    c4.metric("Correlation r", f"{r:.2f}",
-              help="Pearson correlation between judge and human grades across all dimensions.")
-
-
-def agreement_scatter_svg(rows) -> str:
-    """Pure-SVG scatter of judge CQS (x) vs human CQS (y) with an agreement diagonal."""
-    W = H = 360
-    pad = 46
-    plot = W - 2 * pad
-
-    def px(v):  # 0-100 -> x pixel
-        return pad + v / 100 * plot
-
-    def py(v):  # 0-100 -> y pixel (inverted)
-        return pad + plot - v / 100 * plot
-
-    # gridlines + axis ticks at 0,25,50,75,100
-    grid = ""
-    for t in (0, 25, 50, 75, 100):
-        grid += (f"<line x1='{px(t):.1f}' y1='{pad}' x2='{px(t):.1f}' y2='{pad+plot}' "
-                 f"stroke='#eef0ec' stroke-width='1'/>")
-        grid += (f"<line x1='{pad}' y1='{py(t):.1f}' x2='{pad+plot}' y2='{py(t):.1f}' "
-                 f"stroke='#eef0ec' stroke-width='1'/>")
-        grid += (f"<text x='{px(t):.1f}' y='{pad+plot+16}' font-size='10' fill='{MUTED}' "
-                 f"text-anchor='middle'>{t}</text>")
-        grid += (f"<text x='{pad-8}' y='{py(t)+3:.1f}' font-size='10' fill='{MUTED}' "
-                 f"text-anchor='end'>{t}</text>")
-
-    # perfect-agreement diagonal
-    diag = (f"<line x1='{px(0):.1f}' y1='{py(0):.1f}' x2='{px(100):.1f}' y2='{py(100):.1f}' "
-            f"stroke='{TEAL}' stroke-width='1.5' stroke-dasharray='5 4'/>")
-
-    # points, colored by gap size
-    pts = ""
-    for r in rows:
-        x, y = px(r["j_cqs"]), py(r["h_cqs"])
-        gap = abs(r["j_cqs"] - r["h_cqs"])
-        fill = TEAL if gap < 5 else AMBER if gap < 15 else RED
-        pts += (f"<circle cx='{x:.1f}' cy='{y:.1f}' r='6' fill='{fill}' fill-opacity='0.75' "
-                f"stroke='#fff' stroke-width='1.5'><title>{r['conv']['id']}: "
-                f"judge {r['j_cqs']:.0f} vs human {r['h_cqs']:.0f}</title></circle>")
-
-    labels = (f"<text x='{pad+plot/2:.1f}' y='{H-6}' font-size='11' fill='{MUTED}' "
-              f"text-anchor='middle'>LLM judge CQS →</text>"
-              f"<text x='14' y='{pad+plot/2:.1f}' font-size='11' fill='{MUTED}' "
-              f"text-anchor='middle' transform='rotate(-90 14 {pad+plot/2:.1f})'>← Human CQS</text>"
-              f"<text x='{px(78):.1f}' y='{py(86):.1f}' font-size='10' fill='{TEAL}'>perfect agreement</text>")
-
-    return (f"<svg viewBox='0 0 {W} {H}' width='100%' style='max-width:380px' "
-            f"xmlns='http://www.w3.org/2000/svg' role='img'>"
-            f"<rect x='{pad}' y='{pad}' width='{plot}' height='{plot}' fill='#fff' "
-            f"stroke='#e6e9e4'/>{grid}{diag}{pts}{labels}</svg>")
+    cards = [
+        ("Exact match", f"{exact:.0f}%", "Grades where judge and human gave the identical 1–5 score."),
+        ("Within ±1", f"{within1:.0f}%", "Grades where they're within one point — the practical agreement bar."),
+        ("CQS MAE", f"{cqs_mae:.1f} pts", "Average gap between judge and human on the 0–100 scale."),
+        ("Correlation r", f"{r:.2f}", "How closely judge and human grades move together."),
+    ]
+    cols = st.columns(4)
+    for col, (label, value, desc) in zip(cols, cards):
+        col.markdown(
+            f"<div style='background:{SURFACE};border:1px solid {BORDER};border-radius:12px;"
+            f"padding:14px 16px;height:100%'>"
+            f"<div style='font-size:0.8rem;color:{MUTED};text-transform:uppercase;"
+            f"letter-spacing:0.03em'>{label}</div>"
+            f"<div style='font-size:1.9rem;font-weight:800;font-family:Manrope;color:{INK};"
+            f"line-height:1.1;margin:2px 0 4px'>{value}</div>"
+            f"<div style='font-size:0.78rem;color:{MUTED};line-height:1.35'>{desc}</div>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
 
 
 def dimension_drift(rows):
@@ -582,7 +553,7 @@ def render_score_own(judge) -> None:
         scores, reasons = jd.scores(), jd.reasons()
         for d in DIMENSIONS:
             cols = st.columns([1, 4])
-            cols[0].metric(f"{DIM_ICON[d]} {d.capitalize()}", f"{scores[d]}/5", help=METRIC_HELP[d])
+            cols[0].metric(f"{DIM_ICON[d]} {d.capitalize()}", f"{scores[d]}/5")
             cols[1].markdown(
                 f"<div style='padding-top:14px' class='reason'>{esc(reasons[d])}</div>",
                 unsafe_allow_html=True,
