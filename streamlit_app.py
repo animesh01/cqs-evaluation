@@ -37,18 +37,20 @@ def _find_pool() -> Path:
 POOL_DATA = _find_pool()
 
 # Dark theme palette
-BG = "#0f1715"          # page background (deep teal-slate)
-SURFACE = "#16211e"     # card surface
-SURFACE2 = "#1d2b27"    # secondary surface / chips bg
-BORDER = "#2a3a35"      # subtle borders
-TEAL = "#3fd6ab"        # brightened teal accent for dark
-TEAL_DEEP = "#0d766e"   # deep teal for hero gradient
-INK = "#eaf2ef"         # primary text (near-white)
-MUTED = "#90a39d"       # muted text
-MINT = "#15302a"        # customer-bubble bg (dark mint)
-SAND = "#241f17"        # math-line bg (dark sand)
-AMBER = "#e0a23c"       # brightened amber
-RED = "#e26d6d"         # brightened red
+BG = "#ecebf4"          # cool light canvas, faint violet undertone (CQS variant)
+SURFACE = "#ffffff"     # raised card surface
+SURFACE2 = "#f2f1fb"    # secondary surface / chips bg (violet tint)
+BORDER = "#e6e4f2"      # hairline border
+TEAL = "#6257d6"        # primary accent — indigo-violet (distinguishes CQS from PRQ blue)
+TEAL_DEEP = "#5046c4"   # deeper indigo
+INK = "#1a1830"         # near-black text (violet-ink)
+MUTED = "#7b7790"       # muted text
+MINT = "#eef0fb"        # customer-bubble bg (light indigo tint)
+SAND = "#f1f3fb"        # math-line bg (light tint)
+AMBER = "#dd9421"       # warning signal
+RED = "#e8654f"         # negative signal
+CHARCOAL = "#1d1a33"    # deep focal base
+GREEN = "#22b892"       # positive signal
 
 METRIC_HELP = {
     "relevance": "Does the assistant directly address what the customer asked? "
@@ -73,86 +75,132 @@ def inject_styles() -> None:
         f"""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
-        /* dark app background */
-        .stApp {{ background:{BG}; }}
+        /* cool light canvas with faint violet top-corner light (CQS identity) */
+        .stApp {{ background:
+            radial-gradient(1200px 500px at 18% -8%, #f6f4fc 0%, rgba(246,244,252,0) 60%),
+            linear-gradient(180deg, #ecebf4 0%, #e4e2f0 100%); }}
         html, body, [class*="css"] {{ font-family:"DM Sans",sans-serif; color:{INK}; }}
-        h1,h2,h3,h4,h5,h6 {{ font-family:"Manrope",sans-serif !important; letter-spacing:-0.02em; color:{INK} !important; }}
+        h1,h2,h3,h4,h5,h6 {{ font-family:"Manrope",sans-serif !important; letter-spacing:-0.025em; color:{INK} !important; }}
         p, span, div, label, li, td, th {{ color:{INK}; }}
         .stCaption, [data-testid="stCaptionContainer"] {{ color:{MUTED} !important; }}
-        .hero {{
-            border-radius:20px; padding:30px 34px; margin-bottom:18px; color:#fff;
-            background:linear-gradient(135deg,#0b5f59 0%,#0f8a73 55%,#19c79f 100%);
-            position:relative; overflow:hidden;
-            box-shadow:0 0 0 1px rgba(63,214,171,0.18), 0 18px 50px -20px rgba(25,199,159,0.45);
-        }}
-        .hero h1 {{ color:#fff !important; font-size:2.05rem; margin:6px 0 6px; }}
-        .hero p {{ color:#e7f6f1 !important; font-size:1.02rem; line-height:1.55; max-width:80%; margin:0; }}
-        .hero .pill {{ display:inline-block; padding:4px 13px; border-radius:999px;
-            background:rgba(255,255,255,0.18); color:#fff !important; font-size:0.74rem; font-weight:700;
-            letter-spacing:0.07em; text-transform:uppercase; }}
-        .hero-art {{ position:absolute; right:-10px; top:-10px; opacity:0.9; }}
-        .stat-row {{ display:flex; gap:14px; margin-top:18px; flex-wrap:wrap; }}
-        .stat {{ background:rgba(255,255,255,0.14); border-radius:12px; padding:10px 16px; }}
+
+        /* ---- hero: CQS keeps a rich INDIGO gradient (distinct from PRQ's white hero) ---- */
+        .hero {{ position:relative; overflow:hidden; border-radius:24px; padding:32px 36px; margin-bottom:20px; color:#fff;
+            background:linear-gradient(135deg,#4a3fb0 0%,#6257d6 55%,#8a7ef0 100%);
+            box-shadow:0 2px 2px rgba(40,32,90,.10), 0 16px 32px -10px rgba(60,48,160,.4), 0 44px 70px -24px rgba(60,48,160,.45); }}
+        .hero::before {{ content:""; position:absolute; inset:0 0 auto 0; height:1px; border-radius:24px 24px 0 0;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent); }}
+        .hero h1 {{ color:#fff !important; font-size:2.15rem; margin:10px 0 8px; }}
+        .hero p {{ color:#ece9fb !important; font-size:1.02rem; line-height:1.55; max-width:80%; margin:0; }}
+        .hero p b {{ color:#fff !important; }}
+        .hero .pill {{ display:inline-block; padding:6px 14px; border-radius:999px;
+            background:rgba(255,255,255,0.22); color:#fff !important; font-size:0.72rem; font-weight:700;
+            letter-spacing:0.07em; text-transform:uppercase; box-shadow:inset 0 1px 0 rgba(255,255,255,.3); }}
+        .hero-art {{ position:absolute; right:24px; top:18px; opacity:0.96;
+            filter:drop-shadow(0 12px 18px rgba(40,32,90,.3)); }}
+        .stat-row {{ display:flex; gap:14px; margin-top:20px; flex-wrap:wrap; }}
+        .stat {{ background:rgba(255,255,255,0.16); border-radius:13px; padding:11px 17px;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.18); }}
         .stat .n {{ font-size:1.35rem; font-weight:800; font-family:Manrope; color:#fff; }}
-        .stat .l {{ font-size:0.74rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; color:#fff; }}
-        .rubric-box {{ border:1px solid {BORDER}; border-radius:14px; padding:14px 18px; background:{SURFACE}; }}
+        .stat .l {{ font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.9; color:#fff; }}
+
+        /* shared raised-card recipe for light surfaces */
+        .rubric-box, .cqs-card {{ position:relative; background:linear-gradient(180deg,#fff,#fafaff);
+            border:1px solid {BORDER}; border-radius:18px; padding:18px 20px;
+            box-shadow:0 1px 1px rgba(40,32,90,.04), 0 6px 12px -3px rgba(40,32,90,.10), 0 20px 34px -12px rgba(40,32,90,.16); }}
+        .rubric-box::before, .cqs-card::before {{ content:""; position:absolute; inset:0 0 auto 0; height:1px; border-radius:18px 18px 0 0;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent); }}
         .rubric-row {{ display:flex; gap:10px; padding:5px 0; font-size:0.92rem; align-items:baseline; }}
-        .rubric-name {{ min-width:118px; font-weight:700; color:{TEAL}; text-transform:capitalize; }}
-        .conv-msg {{ border-radius:10px; padding:10px 14px; margin:4px 0; font-size:0.93rem; line-height:1.5; }}
-        .conv-user {{ background:{MINT}; }}
-        .conv-asst {{ background:{SURFACE2}; border-left:3px solid {TEAL}; border-radius:0 10px 10px 0; }}
-        .agent-reply {{ border:1px solid {BORDER}; border-left:4px solid {TEAL};
-            border-radius:0 10px 10px 0; padding:14px 18px; background:{SURFACE}; font-size:1rem; line-height:1.5; }}
-        .cqs-card {{ border:1px solid {BORDER}; border-radius:14px; padding:18px 20px; background:{SURFACE}; }}
+        .rubric-name {{ min-width:118px; font-weight:700; color:{TEAL_DEEP}; text-transform:capitalize; }}
+
+        /* conversation bubbles — light tints */
+        .conv-msg {{ border-radius:12px; padding:10px 14px; margin:5px 0; font-size:0.93rem; line-height:1.5; }}
+        .conv-user {{ background:{MINT}; border:1px solid #e2e0f6; }}
+        .conv-asst {{ background:#fff; border:1px solid {BORDER}; border-left:3px solid {TEAL};
+            border-radius:0 12px 12px 0; box-shadow:0 4px 10px -8px rgba(40,32,90,.3); }}
+        .agent-reply {{ border:1px solid {BORDER}; border-left:4px solid {TEAL}; border-radius:0 12px 12px 0;
+            padding:14px 18px; background:#fff; font-size:1rem; line-height:1.5;
+            box-shadow:0 6px 14px -10px rgba(40,32,90,.3); }}
         .cmptbl {{ width:100%; border-collapse:collapse; font-size:0.9rem; }}
-        .cmptbl th {{ color:{MUTED}; text-align:left; padding:6px 10px; font-weight:700;
-            border-bottom:1px solid {BORDER}; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.03em; }}
-        .cmptbl td {{ padding:9px 10px; border-bottom:1px solid {BORDER}; vertical-align:top; }}
+        .cmptbl th {{ color:{MUTED}; text-align:left; padding:7px 10px; font-weight:700;
+            border-bottom:1px solid {BORDER}; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.03em;
+            background:{SURFACE2}; }}
+        .cmptbl td {{ padding:9px 10px; border-bottom:1px solid {BORDER}; vertical-align:top; color:{INK}; }}
         .scorechip {{ display:inline-block; min-width:30px; text-align:center; padding:3px 8px;
-            border-radius:8px; font-weight:700; font-size:0.88rem; }}
+            border-radius:8px; font-weight:700; font-size:0.88rem; box-shadow:inset 0 1px 0 #fff; }}
         .reason {{ color:{MUTED}; font-size:0.85rem; line-height:1.4; }}
-        .mathline {{ background:{SAND}; border-radius:10px; padding:10px 14px; font-size:0.9rem;
+        .mathline {{ background:{SAND}; border:1px solid {BORDER}; border-radius:12px; padding:11px 15px; font-size:0.9rem;
             display:flex; gap:22px; flex-wrap:wrap; margin:6px 0 12px; }}
-        .mathline b {{ font-family:Manrope; }}
-        /* expanders + tabs on dark */
-        [data-testid="stExpander"] {{ border:1px solid {BORDER} !important; border-radius:10px; background:{SURFACE}; }}
-        [data-testid="stExpander"] summary {{ color:{INK} !important; }}
-        .stTabs [data-baseweb="tab"] {{ color:{MUTED}; }}
-        .stTabs [aria-selected="true"] {{ color:{INK}; }}
+        .mathline b {{ font-family:Manrope; color:{INK}; }}
+
+        /* ---- expanders: header matches an indigo-tint pill, dark readable text ---- */
+        [data-testid="stExpander"] {{ border:1px solid {BORDER} !important; border-radius:14px; background:#fff;
+            box-shadow:0 6px 14px -10px rgba(40,32,90,.3); overflow:hidden; }}
+        [data-testid="stExpander"] details > summary,
+        [data-testid="stExpander"] summary {{
+            background:#f0effb !important; border-bottom:1px solid #e2e0f6 !important; }}
+        [data-testid="stExpander"] details > summary,
+        [data-testid="stExpander"] details > summary *,
+        [data-testid="stExpander"] summary,
+        [data-testid="stExpander"] summary *,
+        [data-testid="stExpander"] [class*="Header"],
+        [data-testid="stExpander"] [class*="Header"] *,
+        [data-testid="stExpander"] [data-testid*="xpander"] > div:first-child,
+        [data-testid="stExpander"] [data-testid*="xpander"] > div:first-child * {{
+            color:{INK} !important; -webkit-text-fill-color:{INK} !important; fill:{INK} !important; font-weight:700 !important; }}
+        [data-testid="stExpander"] summary:hover,
+        [data-testid="stExpander"] summary:hover *,
+        [data-testid="stExpander"] details > summary:hover * {{
+            color:{TEAL_DEEP} !important; -webkit-text-fill-color:{TEAL_DEEP} !important; }}
+        [data-testid="stExpander"] [data-testid="stExpanderDetails"] {{ background:#fff !important; }}
+        [data-testid="stExpander"] p, [data-testid="stExpander"] li,
+        [data-testid="stExpander"] strong {{ color:{INK} !important; -webkit-text-fill-color:{INK} !important; }}
+        [data-testid="stExpander"] [data-testid="stMarkdownContainer"],
+        [data-testid="stExpander"] [data-testid="stMarkdownContainer"] * {{ color:{INK} !important; }}
+
+        /* ---- tabs as bubble-pop pills (indigo active) ---- */
+        .stTabs [data-baseweb="tab-list"] {{ gap:10px; border-bottom:none !important; padding:4px 0 6px; }}
+        .stTabs [data-baseweb="tab"] {{
+            background:#fff !important; color:{MUTED} !important; border:1px solid {BORDER} !important;
+            border-radius:999px !important; padding:8px 18px !important; height:auto !important;
+            box-shadow:0 4px 10px -6px rgba(40,32,90,.25), inset 0 1px 0 #fff !important;
+            transition:transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s, background .25s !important; }}
+        .stTabs [data-baseweb="tab"] * {{ color:{MUTED} !important; }}
+        .stTabs [data-baseweb="tab"]:hover {{ transform:translateY(-2px) !important;
+            box-shadow:0 8px 16px -8px rgba(40,32,90,.3) !important; }}
+        .stTabs [data-baseweb="tab"][aria-selected="true"] {{
+            background:#f0effb !important; border-color:#d8d4f3 !important; transform:translateY(-3px) !important;
+            box-shadow:0 10px 20px -8px rgba(98,87,214,.4), inset 0 1px 0 #fff !important; }}
+        .stTabs [data-baseweb="tab"][aria-selected="true"] * {{ color:{TEAL_DEEP} !important; font-weight:700 !important; }}
+        .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] {{ display:none !important; background:transparent !important; }}
+
         [data-testid="stMetricValue"] {{ color:{INK}; }}
         [data-testid="stMetricLabel"] {{ color:{MUTED}; }}
-        /* primary buttons: filled teal */
+        /* primary buttons: filled indigo */
         .stButton button[kind="primary"] {{
-            background:{TEAL} !important; color:#06201a !important; border:none !important;
-            font-weight:600 !important;
-        }}
-        .stButton button[kind="primary"]:hover {{ background:#5fe2bd !important; color:#06201a !important; }}
-        /* selectbox: teal-accented to match the buttons */
+            background:linear-gradient(180deg,{TEAL},{TEAL_DEEP}) !important; color:#fff !important; border:none !important;
+            font-weight:700 !important; border-radius:12px !important;
+            box-shadow:0 8px 18px -6px rgba(98,87,214,.5), inset 0 1px 0 rgba(255,255,255,.2) !important; }}
+        .stButton button[kind="primary"]:hover {{ filter:brightness(1.07); transform:translateY(-1px); }}
+        /* selectbox */
         [data-testid="stSelectbox"] div[data-baseweb="select"] > div {{
-            background:{SURFACE} !important; border-color:{TEAL} !important; color:{INK} !important;
-        }}
+            background:#fff !important; border-color:{BORDER} !important; color:{INK} !important; border-radius:12px !important; }}
         [data-testid="stSelectbox"] svg {{ fill:{TEAL} !important; }}
-        /* the open dropdown menu popup (BaseWeb popover) */
-        ul[role="listbox"] {{ background:{SURFACE} !important; border:1px solid {BORDER} !important; }}
-        ul[role="listbox"] li {{ background:{SURFACE} !important; color:{INK} !important; }}
+        ul[role="listbox"] {{ background:#fff !important; border:1px solid {BORDER} !important; }}
+        ul[role="listbox"] li {{ background:#fff !important; color:{INK} !important; }}
         ul[role="listbox"] li:hover {{ background:{SURFACE2} !important; color:{INK} !important; }}
-        li[role="option"] {{ background:{SURFACE} !important; color:{INK} !important; }}
+        li[role="option"] {{ background:#fff !important; color:{INK} !important; }}
         li[role="option"]:hover, li[role="option"][aria-selected="true"] {{
-            background:{SURFACE2} !important; color:{TEAL} !important;
-        }}
-        div[data-baseweb="popover"] {{ background:{SURFACE} !important; }}
-        div[data-baseweb="menu"] {{ background:{SURFACE} !important; }}
+            background:{SURFACE2} !important; color:{TEAL_DEEP} !important; }}
+        div[data-baseweb="popover"], div[data-baseweb="menu"] {{ background:#fff !important; }}
         div[data-baseweb="menu"] li {{ color:{INK} !important; }}
-        /* native help tooltips (the ⓘ hover popups) — make them dark and readable */
+        /* native help tooltips — light, readable */
         [data-testid="stTooltipContent"] {{
-            background:{SURFACE2} !important; color:{INK} !important;
-            border:1px solid {BORDER} !important;
-        }}
+            background:#fff !important; color:{INK} !important; border:1px solid {BORDER} !important; }}
         [data-testid="stTooltipContent"] * {{ color:{INK} !important; }}
-        div[role="tooltip"] {{ background:{SURFACE2} !important; color:{INK} !important; }}
+        div[role="tooltip"] {{ background:#fff !important; color:{INK} !important; }}
         div[role="tooltip"] * {{ color:{INK} !important; }}
         [data-testid="stTooltipHoverTarget"] svg {{ fill:{MUTED} !important; opacity:0.85; }}
-        /* the small ⓘ icon next to metric labels */
         [data-testid="stMetricLabel"] svg {{ fill:{TEAL} !important; opacity:0.9; }}
         </style>
         """,
@@ -162,22 +210,18 @@ def inject_styles() -> None:
 
 def hero() -> None:
     art = (
-        "<svg class='hero-art' width='220' height='160' viewBox='0 0 220 160' fill='none'>"
-        "<circle cx='150' cy='70' r='95' fill='rgba(255,255,255,0.06)'/>"
-        "<circle cx='185' cy='30' r='55' fill='rgba(255,255,255,0.05)'/>"
-        # speech bubbles
-        "<rect x='40' y='44' width='86' height='40' rx='12' fill='rgba(255,255,255,0.92)'/>"
-        "<rect x='52' y='56' width='52' height='6' rx='3' fill='#0d766e'/>"
-        "<rect x='52' y='68' width='36' height='6' rx='3' fill='#9fe1cb'/>"
-        "<polygon points='56,84 56,98 72,84' fill='rgba(255,255,255,0.92)'/>"
-        "<rect x='96' y='92' width='86' height='40' rx='12' fill='rgba(255,255,255,0.22)'/>"
-        "<rect x='108' y='104' width='52' height='6' rx='3' fill='#fff'/>"
-        "<rect x='108' y='116' width='36' height='6' rx='3' fill='#cfeee3'/>"
-        # check gauge
-        "<circle cx='168' cy='66' r='22' fill='none' stroke='#fff' stroke-width='5' "
-        "stroke-dasharray='104 138' stroke-linecap='round' transform='rotate(-90 168 66)'/>"
-        "<path d='M159 66 l6 6 l12 -13' stroke='#fff' stroke-width='4' fill='none' "
-        "stroke-linecap='round' stroke-linejoin='round'/>"
+        "<svg class='hero-art' width='160' height='116' viewBox='0 0 160 116' fill='none'>"
+        "<circle cx='128' cy='42' r='74' fill='rgba(255,255,255,0.06)'/>"
+        "<circle cx='150' cy='22' r='42' fill='rgba(255,255,255,0.05)'/>"
+        # chat bubble (the conversation being scored)
+        "<rect x='14' y='32' width='96' height='54' rx='15' fill='#fff'/>"
+        "<rect x='30' y='47' width='58' height='7' rx='3.5' fill='#5046c4'/>"
+        "<rect x='30' y='62' width='42' height='7' rx='3.5' fill='#b8b1f0'/>"
+        "<polygon points='36,86 36,102 56,86' fill='#fff'/>"
+        # score badge
+        "<circle cx='118' cy='74' r='23' fill='#22b892' stroke='#fff' stroke-width='3'/>"
+        "<text x='118' y='81' text-anchor='middle' font-family='Manrope,sans-serif' "
+        "font-weight='800' font-size='18' fill='#fff'>87</text>"
         "</svg>"
     )
     st.markdown(
@@ -232,11 +276,11 @@ def score_color(cqs: float) -> str:
 
 def chip(value: int) -> str:
     if value >= 4:
-        bg, fg = "#13332b", TEAL
+        bg, fg = "#e1f5ee", "#0f7d62"   # strong — light teal tint
     elif value >= 3:
-        bg, fg = "#33280f", AMBER
+        bg, fg = "#fbf1dc", "#9a6a14"   # ok — light amber tint
     else:
-        bg, fg = "#3a1d1d", RED
+        bg, fg = "#fbe9e6", "#c1422c"   # weak — light coral tint
     return f"<span class='scorechip' style='background:{bg};color:{fg}'>{value}</span>"
 
 
