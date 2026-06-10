@@ -28,7 +28,7 @@ def pearson(xs, ys) -> float:
 def main() -> None:
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(description="Score conversations with the CQS judge.")
-    ap.add_argument("--data", default=os.path.join(here, "data", "sample_conversations.json"))
+    ap.add_argument("--data", default=os.path.join(here, "data", "conversation_pool.json"))
     ap.add_argument("--mock", action="store_true", help="use the no-API heuristic baseline")
     ap.add_argument("--model", default="claude-sonnet-4-6")
     ap.add_argument("--threshold", type=float, default=70.0, help="CQS pass/fail threshold")

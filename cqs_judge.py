@@ -1,4 +1,4 @@
-"""LLM-as-a-judge for Conversation Quality Score (CQS).
+"""LLM-as-a-judge for Chat Quality Score (CQS).
 
 Two modes:
   - real:  uses the Anthropic API (set ANTHROPIC_API_KEY, `pip install anthropic`)

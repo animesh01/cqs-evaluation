@@ -1,11 +1,13 @@
-# Conversation Quality Score (CQS) — Streamlit app
+# Chat Quality Score (CQS) — Streamlit app
 
 An **LLM-as-a-judge** evaluation demo for conversational AI. It scores customer
 conversations on four rubric dimensions — relevance, helpfulness, correctness,
 tone — rolls them into a single **0–100 CQS**, and calibrates the automated
 judge against human labels.
 
-All conversations here are synthetic. No proprietary code or data is included.
+## Data Disclaimer
+
+All conversations, scores, and examples in this repository are **synthetic and fabricated for demonstration**. Nothing here is derived from any employer, customer, or production system, and the repository contains no proprietary, confidential, or company-specific data.
 
 ## Run locally
 
@@ -44,5 +46,5 @@ sidebar and paste an Anthropic API key — it lives only in your session.
 streamlit_app.py    # the app
 cqs_judge.py        # rubric, mock judge, and real Anthropic judge
 evaluate.py         # original command-line evaluator (still works)
-data/sample_conversations.json
+data/conversation_pool.json
 ```

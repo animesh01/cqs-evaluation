@@ -1,4 +1,4 @@
-"""Conversation Quality Score (CQS) — evaluation console for an AI shopping assistant.
+"""Chat Quality Score (CQS) — evaluation console for an AI shopping assistant.
 
 Scores customer conversations on four rubric dimensions (relevance, helpfulness,
 correctness, tone), rolls them into a single 0-100 CQS, and benchmarks an
@@ -61,7 +61,7 @@ METRIC_HELP = {
 }
 DIM_ICON = {"relevance": "🎯", "helpfulness": "🧭", "correctness": "✅", "tone": "💬"}
 
-st.set_page_config(page_title="CQS — Conversation Quality Score", page_icon="✦",
+st.set_page_config(page_title="CQS — Chat Quality Score", page_icon="✦",
                    layout="wide", initial_sidebar_state="collapsed")
 
 
@@ -185,7 +185,7 @@ def hero() -> None:
         <div class="hero">
           {art}
           <span class="pill">LLM-as-a-judge · evaluation harness</span>
-          <h1>Conversation Quality Score</h1>
+          <h1>Chat Quality Score</h1>
           <p>Grades every conversation from a customer-facing <b>AI shopping assistant</b> on
           four quality dimensions, rolls them into a single <b>0–100 CQS</b>, and keeps the
           automated judge honest against human reviewers.</p>
