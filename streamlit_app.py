@@ -90,7 +90,8 @@ def inject_styles() -> None:
             box-shadow:0 2px 2px rgba(40,32,90,.10), 0 16px 32px -10px rgba(60,48,160,.4), 0 44px 70px -24px rgba(60,48,160,.45); }}
         .hero::before {{ content:""; position:absolute; inset:0 0 auto 0; height:1px; border-radius:24px 24px 0 0;
             background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent); }}
-        .hero h1 {{ color:#fff !important; font-size:2.15rem; margin:10px 0 8px; }}
+        .hero h1, .hero h1 *, .hero [data-testid="stMarkdownContainer"] h1 {{
+            color:#fff !important; -webkit-text-fill-color:#fff !important; font-size:2.15rem; margin:10px 0 8px; }}
         .hero p {{ color:#ece9fb !important; font-size:1.02rem; line-height:1.55; max-width:80%; margin:0; }}
         .hero p b {{ color:#fff !important; }}
         .hero .pill {{ display:inline-block; padding:6px 14px; border-radius:999px;
